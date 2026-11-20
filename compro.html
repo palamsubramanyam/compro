@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Compro – Music Player</title>
+<style>
+:root{--bg1:#06141f;--bg2:#0b2a3a;--orb1:#14b8a6;--orb2:#6366f1;--orb3:#38bdf8;--text:#e8f6f8;--muted:#9bb8c2;--glass:rgba(255,255,255,.09);--glass2:rgba(255,255,255,.15);--line:rgba(255,255,255,.18);--accent:#5eead4;--accent-ink:#04201d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg1:#e6f6f7;--bg2:#d5e7f5;--text:#0b2530;--muted:#47636e;--glass:rgba(255,255,255,.55);--glass2:rgba(255,255,255,.8);--line:rgba(255,255,255,.9);--accent:#0f766e;--accent-ink:#fff}}
+:root[data-theme="light"]{--bg1:#e6f6f7;--bg2:#d5e7f5;--text:#0b2530;--muted:#47636e;--glass:rgba(255,255,255,.55);--glass2:rgba(255,255,255,.8);--line:rgba(255,255,255,.9);--accent:#0f766e;--accent-ink:#fff}
+:root[data-theme="dark"]{--bg1:#06141f;--bg2:#0b2a3a;--text:#e8f6f8;--muted:#9bb8c2;--glass:rgba(255,255,255,.09);--glass2:rgba(255,255,255,.15);--line:rgba(255,255,255,.18);--accent:#5eead4;--accent-ink:#04201d}
+*{box-sizing:border-box;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--text);min-height:100vh;overflow-x:hidden}
+.orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.45;z-index:0;pointer-events:none}
+.o1{width:420px;height:420px;background:var(--orb1);top:-120px;left:-100px}
+.o2{width:480px;height:480px;background:var(--orb2);bottom:-160px;right:-120px}
+.o3{width:300px;height:300px;background:var(--orb3);top:40%;left:45%}
+.glass{background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border-radius:22px;box-shadow:0 10px 40px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.2)}
+.app{position:relative;z-index:1;display:grid;grid-template-columns:230px 1fr;gap:16px;padding:16px 16px 120px;max-width:1300px;margin:auto}
+aside{padding:20px;position:sticky;top:16px;align-self:start}
+.logo{font-size:24px;font-weight:700;letter-spacing:.5px;margin-bottom:4px}.logo span{color:var(--accent)}
+.tag{color:var(--muted);font-size:12px;margin-bottom:18px}
+nav button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--muted);padding:10px 12px;border-radius:12px;font-size:14px;cursor:pointer;margin-bottom:4px}
+nav button:hover{background:var(--glass)}nav button.on{background:var(--glass2);color:var(--text);font-weight:600}
+.sec{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin:16px 0 8px}
+.theme{margin-top:18px;width:100%;padding:9px;border-radius:12px;border:1px solid var(--line);background:var(--glass);color:var(--text);cursor:pointer}
+main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.top{display:flex;gap:12px;align-items:center;padding:12px 16px}
+.top input{flex:1;background:none;border:0;outline:0;color:var(--text);font-size:15px}
+.top input::placeholder{color:var(--muted)}
+.hero{display:grid;grid-template-columns:200px 1fr;gap:20px;padding:20px;align-items:center}
+.art{aspect-ratio:1;border-radius:20px;display:grid;place-items:center;font-size:56px;box-shadow:0 12px 30px rgba(0,0,0,.3)}
+.hero h2{font-size:28px;margin:6px 0}.hero p{color:var(--muted);font-size:14px}
+canvas{width:100%;height:70px;margin-top:14px}
+h3{font-size:18px;padding:0 4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.card{padding:12px;cursor:pointer;transition:transform .2s,background .2s}
+.card:hover{transform:translateY(-4px);background:var(--glass2)}.card.cur{outline:2px solid var(--accent)}
+.card .art{font-size:36px;border-radius:14px;margin-bottom:10px}
+.card b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card small{color:var(--muted);font-size:12px}
+.empty{color:var(--muted);padding:30px;text-align:center}
+.bar{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:5;max-width:1268px;margin:auto;padding:12px 18px;display:grid;grid-template-columns:1fr 2fr 1fr;gap:16px;align-items:center}
+.np{display:flex;gap:12px;align-items:center;min-width:0}.np .art{width:48px;font-size:22px;border-radius:12px;flex:none}
+.np b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.np small{color:var(--muted);font-size:12px}
+.ctl{display:flex;flex-direction:column;gap:6px;align-items:center}
+.btns{display:flex;gap:10px;align-items:center}
+.ib{width:38px;height:38px;border-radius:50%;border:0;background:var(--glass);color:var(--text);cursor:pointer;font-size:16px}
+.ib:hover{background:var(--glass2)}.ib.on{color:var(--accent)}
+.play{width:48px;height:48px;background:var(--accent);color:var(--accent-ink);font-size:18px}
+.prog{display:flex;gap:8px;align-items:center;width:100%;font-size:11px;color:var(--muted)}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:5px;border-radius:5px;background:var(--glass2);outline:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent)}
+input[type=range]::-moz-range-thumb{width:13px;height:13px;border:0;border-radius:50%;background:var(--accent)}
+.vol{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+@media(max-width:820px){.app{grid-template-columns:1fr}aside{position:static}nav{display:flex;flex-wrap:wrap;gap:6px}nav button{width:auto;background:var(--glass)}.sec{display:none}.hero{grid-template-columns:100px 1fr}.hero .art{font-size:32px}.hero h2{font-size:20px}.bar{grid-template-columns:1fr;gap:8px}.vol{display:none}}
+</style>
+</head>
+<body>
+<div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+<div class="app">
+ <aside class="glass">
+  <div class="logo">Com<span>pro</span></div>
+  <div class="tag">Music for every mood</div>
+  <nav id="nav"></nav>
+  <button class="theme" id="theme">Toggle theme</button>
+ </aside>
+ <main>
+  <div class="glass top"><span>🔍</span><input id="q" placeholder="Search tracks, artists or moods…"></div>
+  <section class="glass hero">
+   <div class="art" id="hArt">♪</div>
+   <div><p>NOW PLAYING</p><h2 id="hTitle">Pick a track</h2><p id="hSub">Tap any card to start listening</p><canvas id="viz" width="600" height="70"></canvas></div>
+  </section>
+  <h3 id="listTitle">All tracks</h3>
+  <div class="grid" id="grid"></div>
+ </main>
+</div>
+<div class="glass bar">
+ <div class="np"><div class="art" id="bArt">♪</div><div style="min-width:0"><b id="bTitle">Nothing playing</b><small id="bSub">Compro</small></div><button class="ib" id="like" title="Like">♡</button></div>
+ <div class="ctl">
+  <div class="btns"><button class="ib" id="shuf" title="Shuffle">⇄</button><button class="ib" id="prev">⏮</button><button class="ib play" id="pp">▶</button><button class="ib" id="next">⏭</button><button class="ib" id="rep" title="Repeat">↻</button></div>
+  <div class="prog"><span id="cur">0:00</span><input type="range" id="seek" min="0" max="100" value="0"><span id="tot">0:00</span></div>
+ </div>
+ <div class="vol"><span>🔊</span><input type="range" id="vol" min="0" max="100" value="70" style="max-width:120px"></div>
+</div>
+<script>
+const T=[
+{t:"Midnight Drive",a:"Neon Lanes",m:"Chill",bpm:84,root:57,sc:[0,3,5,7,10],w:"triangle",h:178,e:"🌃"},
+{t:"Ocean Breath",a:"Tidal Hum",m:"Focus",bpm:70,root:52,sc:[0,2,4,7,9],w:"sine",h:195,e:"🌊"},
+{t:"Static Bloom",a:"Pixel Garden",m:"Energy",bpm:122,root:60,sc:[0,2,4,7,9],w:"square",h:210,e:"🌸"},
+{t:"Glass Hours",a:"Liquid Atlas",m:"Chill",bpm:78,root:55,sc:[0,2,3,7,8],w:"sine",h:165,e:"🫧"},
+{t:"Deep Work",a:"Lo-Fi Lab",m:"Focus",bpm:76,root:50,sc:[0,3,5,7,10],w:"triangle",h:185,e:"💻"},
+{t:"Skyline Rush",a:"Voltage Kid",m:"Energy",bpm:132,root:62,sc:[0,2,4,5,7,9,11],w:"sawtooth",h:225,e:"⚡"},
+{t:"Moon Tea",a:"Quiet Orchard",m:"Sleep",bpm:58,root:48,sc:[0,2,4,7,9],w:"sine",h:240,e:"🌙"},
+{t:"Rain on Glass",a:"Tidal Hum",m:"Sleep",bpm:60,root:50,sc:[0,3,7,10],w:"sine",h:200,e:"🌧️"},
+{t:"Circuit Sunrise",a:"Pixel Garden",m:"Energy",bpm:116,root:59,sc:[0,2,4,7,9],w:"triangle",h:170,e:"🌅"},
+{t:"Paper Planes",a:"Liquid Atlas",m:"Chill",bpm:90,root:56,sc:[0,2,4,7,9],w:"triangle",h:188,e:"✈️"}];
+T.forEach((s,i)=>{s.id=i;s.dur=100+((i*17)%50)});
+const $=id=>document.getElementById(id);
+let view="All tracks",mood=null,liked=new Set(),shuffle=false,repeat=false,idx=-1,playing=false,elapsed=0,lastStep=-1,ctx,master,an,timer,last=0,q="";
+try{const l=JSON.parse(localStorage.getItem("compro_liked")||"[]");liked=new Set(l)}catch(e){}
+const art=s=>`background:linear-gradient(135deg,hsl(${s.h},70%,55%),hsl(${s.h+60},70%,40%))`;
+const fmt=x=>Math.floor(x/60)+":"+String(Math.floor(x%60)).padStart(2,"0");
+function list(){let a=T.filter(s=>(view!=="Liked songs"||liked.has(s.id))&&(!mood||s.m===mood)&&(s.t+s.a+s.m).toLowerCase().includes(q));return a}
+function nav(){const n=$("nav");n.innerHTML="";[["All tracks",null],["Liked songs",null]].forEach(([v])=>{const b=document.createElement("button");b.textContent=(v==="All tracks"?"🎵 ":"♥ ")+v;b.className=view===v&&!mood?"on":"";b.onclick=()=>{view=v;mood=null;render()};n.appendChild(b)});
+const h=document.createElement("div");h.className="sec";h.textContent="Moods";n.appendChild(h);
+["Chill","Focus","Energy","Sleep"].forEach(m=>{const b=document.createElement("button");b.textContent="# "+m;b.className=mood===m?"on":"";b.onclick=()=>{mood=m;view="All tracks";render()};n.appendChild(b)})}
+function render(){nav();$("listTitle").textContent=mood?mood+" mix":view;const a=list(),g=$("grid");g.innerHTML="";
+if(!a.length){g.innerHTML='<div class="empty glass" style="grid-column:1/-1">Nothing here yet. Like a song or try another search.</div>';return}
+a.forEach(s=>{const d=document.createElement("div");d.className="card glass"+(s.id===idx?" cur":"");d.innerHTML=`<div class="art" style="${art(s)}">${s.e}</div><b>${s.t}</b><small>${s.a} · ${s.m}</small>`;d.onclick=()=>play(s.id);g.appendChild(d)})}
+function init(){if(ctx)return;ctx=new (window.AudioContext||window.webkitAudioContext)();master=ctx.createGain();master.gain.value=$("vol").value/100*.8;an=ctx.createAnalyser();an.fftSize=64;master.connect(an);an.connect(ctx.destination);timer=setInterval(tick,40);last=performance.now();draw()}
+const fq=m=>440*Math.pow(2,(m-69)/12);
+function rnd(n,s){const x=Math.sin(n*127.1+s*311.7)*43758.5453;return x-Math.floor(x)}
+function note(f,t,d,type,v){const o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(master);o.start(t);o.stop(t+d+.05)}
+function step(s,n){const sd=60/s.bpm/2,t=ctx.currentTime+.02,sc=s.sc,seed=s.id+1;
+if(n%8===0){[0,2,4].forEach(k=>note(fq(s.root-12+sc[(k+Math.floor(n/8)*2)%sc.length]),t,sd*7,"sine",.12))}
+if(rnd(n,seed)>.28){const o=Math.floor(rnd(n+99,seed)*sc.length);note(fq(s.root+12+sc[o]+(rnd(n+7,seed)>.8?12:0)),t,sd*1.8,s.w,.09)}
+if(n%4===0)note(60,t,.12,"sine",.35);}
+function tick(){const now=performance.now(),dt=(now-last)/1000;last=now;if(!playing||idx<0)return;elapsed+=dt;const s=T[idx],c=Math.floor(elapsed/(60/s.bpm/2));if(c!==lastStep){lastStep=c;step(s,c)}
+if(elapsed>=s.dur){if(repeat){elapsed=0}else nextT(1)}ui()}
+function ui(){const s=T[idx];if(!s)return;$("cur").textContent=fmt(elapsed);$("tot").textContent=fmt(s.dur);$("seek").value=elapsed/s.dur*100}
+function play(i){init();ctx.resume();idx=i;elapsed=0;lastStep=-1;playing=true;const s=T[i];
+["bArt","hArt"].forEach(id=>{$(id).style.cssText=art(s);$(id).textContent=s.e});
+$("bTitle").textContent=$("hTitle").textContent=s.t;$("bSub").textContent=$("hSub").textContent=s.a+" · "+s.m;
+document.title=s.t+" – Compro";sync();render()}
+function sync(){$("pp").textContent=playing?"⏸":"▶";$("like").textContent=liked.has(idx)?"♥":"♡";$("like").classList.toggle("on",liked.has(idx));$("shuf").classList.toggle("on",shuffle);$("rep").classList.toggle("on",repeat)}
+function nextT(d){const a=list();if(!a.length)return;let p=a.findIndex(s=>s.id===idx);let n;if(shuffle&&d>0)n=a[Math.floor(Math.random()*a.length)].id;else n=a[((p<0?0:p+d)+a.length)%a.length].id;play(n)}
+$("pp").onclick=()=>{if(idx<0)return play(list()[0]?list()[0].id:0);init();ctx.resume();playing=!playing;sync()};
+$("next").onclick=()=>nextT(1);
+$("prev").onclick=()=>{if(elapsed>4){elapsed=0;lastStep=-1}else nextT(-1)};
+$("shuf").onclick=()=>{shuffle=!shuffle;sync()};$("rep").onclick=()=>{repeat=!repeat;sync()};
+$("like").onclick=()=>{if(idx<0)return;liked.has(idx)?liked.delete(idx):liked.add(idx);try{localStorage.setItem("compro_liked",JSON.stringify([...liked]))}catch(e){}sync();if(view==="Liked songs")render()};
+$("seek").oninput=e=>{if(idx<0)return;elapsed=e.target.value/100*T[idx].dur;lastStep=Math.floor(elapsed/(60/T[idx].bpm/2));ui()};
+$("vol").oninput=e=>{if(master)master.gain.value=e.target.value/100*.8};
+$("q").oninput=e=>{q=e.target.value.toLowerCase().trim();render()};
+$("theme").onclick=()=>{const r=document.documentElement,d=getComputedStyle(r).getPropertyValue("--bg1").trim()==="#06141f";r.setAttribute("data-theme",d?"light":"dark")};
+function draw(){requestAnimationFrame(draw);const c=$("viz"),x=c.getContext("2d"),b=new Uint8Array(an.frequencyBinCount);an.getByteFrequencyData(b);x.clearRect(0,0,c.width,c.height);const w=c.width/b.length;
+const col=getComputedStyle(document.documentElement).getPropertyValue("--accent").trim()||"#5eead4";x.fillStyle=col;b.forEach((v,i)=>{const h=Math.max(3,v/255*c.height);x.globalAlpha=.85;x.beginPath();x.roundRect?x.roundRect(i*w+2,c.height-h,w-4,h,4):x.rect(i*w+2,c.height-h,w-4,h);x.fill()})}
+document.addEventListener("keydown",e=>{if(e.target.tagName==="INPUT")return;if(e.code==="Space"){e.preventDefault();$("pp").click()}if(e.code==="ArrowRight")nextT(1);if(e.code==="ArrowLeft")nextT(-1)});
+render();
+</script>
+</body>
+</html>
